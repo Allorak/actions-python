@@ -1,5 +1,3 @@
-from actions import Action
-
 # Actions-python
 
 ## Overview
