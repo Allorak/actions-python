@@ -17,12 +17,12 @@ in event-driven systems.
 To install the project you can use pip:
 
 ```bash
-pip install ---
+pip install https://github.com/Allorak/actions-python
 ```
 
 Or install from PyPI index:
 ```bash
-pip install ---
+pip install actions_python
 ```
 
 ## Core ideas

@@ -8,7 +8,7 @@ setup(
     description="A simple Python packaging for managing event-like actions and validating handlers argument types.",
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url="---",
+    url="https://github.com/Allorak/actions-python",
     packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
