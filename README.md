@@ -1,3 +1,5 @@
+from actions import Action
+
 # Actions-python
 
 ## Overview
@@ -34,6 +36,25 @@ which are validated at both the connection stage and the invocation stage.
 - Type validation: When a handler is connected, the types of its arguments are validated to ensure they match the
 expected types. Similarly, when invoking the action, arguments are validated against the expected types.
 
-## Example
+## Usage
+For creating an action initialize a variable of `Action` type and specify types of action's params
+```python
+from actions import Action
 
+class Test:
+    def __init__(self):
+        self.example_action = Action(int, str)
+
+    def fire(self):
+        self.example_action.invoke(0, "test")
+
+def print_callback(number: int, text: str):
+    print(f"Number: {number} | Text: {text}")
+
+test = Test()
+test.example_action.connect(print_callback)
+test.fire()
+```
+
+## Example
 Usage examples can be found in `examples/` folder
