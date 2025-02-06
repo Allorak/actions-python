@@ -1,24 +1,31 @@
-from typing import Callable, Generic, List, Tuple, TypeVar, get_args, get_type_hints
+from typing import Callable, List, TypeVar, get_args, Type
 import inspect
 
 Args = TypeVar("Args")
 
 
-class Action(Generic[Args]):
+class Action:
     """
-    A generic action class
+    Represents an action that can connect handlers and invoke them with specified argument types.
+    Handlers are validated to ensure their argument types match the expected types when connected or invoked.
     """
-    def __init__(self) -> None:
-        """Initialize the action and infer argument types."""
+    def __init__(self, *arg_types: Type) -> None:
+        """
+        Initializes the action with the expected argument types for handlers.
+
+        Args:
+            arg_types: One or more types that the action handlers should expect as arguments.
+        """
+        self._arg_types = arg_types
+
         self._handlers: List[Callable[..., None]] = []
-        self._arg_types = get_type_hints(self).get("Args", Tuple)
 
     def connect(self, handler: Callable[..., None]) -> None:
         """
-        Connect a handler (callback) to the action. Validates that the handler's signature matches the expected types.
+        Connects a handler (callback) to the action and validates its signature against the expected argument types.
 
         Args:
-            handler: A callable to connect to this action.
+            handler: A callable to be connected to the action. It should match the expected argument types.
 
         Raises:
             TypeError: If the handler's signature does not match the expected argument types.
@@ -45,13 +52,13 @@ class Action(Generic[Args]):
 
     def invoke(self, *args: Args) -> None:
         """
-        Call the action, invoking all connected handlers. Validates argument types before calling.
+        Invokes all connected handlers with the provided arguments, ensuring type validation before calling.
 
         Args:
-            args: Arguments to pass to the connected handlers.
+            args: Arguments to pass to the connected handlers. These must match the expected types.
 
         Raises:
-            TypeError: If called arguments do not match the expected types.
+            TypeError: If the arguments passed do not match the expected types.
         """
         if len(args) != len(self._arg_types):
             raise TypeError(
