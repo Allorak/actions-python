@@ -54,6 +54,22 @@ class Action:
 
         self._handlers.append(handler)
 
+
+    def disconnect(self, handler: Callable[..., None]) -> None:
+        """
+        Disconnects a handler (callback) from the action.
+
+        Args:
+            handler: A callable to be disconnected from the action. It should be connected first.
+
+        Raises:
+            ValueError: If the handler is not connected to the action.
+        """
+        try:
+            self._handlers.remove(handler)
+        except ValueError:
+            raise ValueError("Can't disconnect handler: handler is not connected..")
+
     def invoke(self, *args: Args) -> None:
         """
         Invokes all connected handlers with the provided arguments, ensuring type validation before calling.
