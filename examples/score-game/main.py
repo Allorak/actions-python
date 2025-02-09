@@ -3,6 +3,7 @@ from game import Game
 import time
 from loguru import logger
 
+
 class PlayerLogger:
     def __init__(self, players: list[Player]):
         for player in players:

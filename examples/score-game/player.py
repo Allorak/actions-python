@@ -1,4 +1,5 @@
-from actions_python import Action
+from actions import Action
+
 
 class Player:
     def __init__(self, name: str):

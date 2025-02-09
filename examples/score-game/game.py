@@ -1,4 +1,4 @@
-from actions_python import Action
+from actions import Action
 
 from player import Player
 
