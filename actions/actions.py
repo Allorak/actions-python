@@ -1,8 +1,9 @@
-from typing import Callable, List, TypeVar, get_args, Type
+from typing import Callable, List, TypeVar, get_args, Type, get_type_hints
 import inspect
 
-Args = TypeVar("Args")
+from .utils import is_compatible, type_name
 
+Args = TypeVar('Args')
 
 class Action:
     """
@@ -34,7 +35,8 @@ class Action:
             raise TypeError("Connected handler must be a callable.")
 
         signature = inspect.signature(handler)
-        handler_params = [param.annotation for param in signature.parameters.values()]
+        type_hints = get_type_hints(handler)
+        handler_params = [type_hints.get(param.name, inspect._empty) for param in signature.parameters.values()]
 
         if len(handler_params) != len(self._arg_types):
             raise TypeError(
@@ -42,10 +44,12 @@ class Action:
             )
 
         for handler_type, expected_type in zip(handler_params, self._arg_types):
-            if handler_type != expected_type:
+            if handler_type.annotation is inspect._empty:
+                raise TypeError(f"Parameter ('{handler_type.name}') of action handler has no type annotation.")
+            if is_compatible(handler_type, expected_type):
                 raise TypeError(
-                    f"Handler argument type mismatch. Expected '{expected_type.__name__}', "
-                    f"got '{handler_type.__name__}'."
+                    f"Handler argument type mismatch. Expected '{type_name(expected_type)}', "
+                    f"got '{type_name(handler_type)}'."
                 )
 
         self._handlers.append(handler)
@@ -72,7 +76,8 @@ class Action:
                 concrete_types = (expected_type,)
 
             if not any(isinstance(arg, t) for t in concrete_types):
-                raise TypeError(f"Call argument type mismatch. Expected '{expected_type}', got '{type(arg).__name__}'.")
+                raise TypeError(f"Call argument type mismatch. Expected '{type_name(expected_type)}',"
+                                f" got '{type_name(type(arg))}'.")
 
         for handler in self._handlers:
             handler(*args)
