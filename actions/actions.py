@@ -5,6 +5,8 @@ from .utils import is_compatible, type_name
 
 Args = TypeVar('Args')
 
+#TODO: проверить работу; тесты; проверка производительности; обработка параметров при вызове, если нет тайп хинтов
+
 class Action:
     """
     Represents an action that can connect handlers and invoke them with specified argument types.
@@ -36,17 +38,21 @@ class Action:
 
         signature = inspect.signature(handler)
         type_hints = get_type_hints(handler)
-        handler_params = [type_hints.get(param.name, inspect._empty) for param in signature.parameters.values()]
+        handler_params = {param.name: type_hints.get(param.name, inspect._empty)
+                          for param in signature.parameters.values()}
+
+        param_names = list(handler_params.keys())
+        param_types = list(handler_params.values())
 
         if len(handler_params) != len(self._arg_types):
             raise TypeError(
                 f"Handler argument count mismatch. Expected {len(self._arg_types)}, got {len(handler_params)}."
             )
 
-        for handler_type, expected_type in zip(handler_params, self._arg_types):
-            if handler_type.annotation is inspect._empty:
-                raise TypeError(f"Parameter ('{handler_type.name}') of action handler has no type annotation.")
-            if is_compatible(handler_type, expected_type):
+        for param_name, handler_type, expected_type in zip(param_names, param_types, self._arg_types):
+            if handler_type is inspect._empty:
+                raise TypeError(f"Parameter ('{param_name}') of action handler has no type annotation.")
+            if not is_compatible(handler_type, expected_type):
                 raise TypeError(
                     f"Handler argument type mismatch. Expected '{type_name(expected_type)}', "
                     f"got '{type_name(handler_type)}'."
