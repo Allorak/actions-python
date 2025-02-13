@@ -1,4 +1,6 @@
 from typing import Any, Union, Type, Tuple, TypeVar, Callable, Annotated, get_args, get_origin
+from collections.abc import Callable as abc_Callable
+
 
 def is_compatible_type(type_a: Type[Any], valid_types: Tuple[Type[Any], ...]) -> bool:
     """
@@ -23,9 +25,30 @@ def is_compatible_type(type_a: Type[Any], valid_types: Tuple[Type[Any], ...]) ->
         expected_origin = get_origin(expected_type)
         expected_args = get_args(expected_type)
 
+        callable_types = [Callable, abc_Callable]
+
         if expected_origin is Union:
             if any(is_compatible_type(type_a, (arg,)) for arg in expected_args):
                 return True
+
+        elif expected_origin in callable_types and type_a_origin in callable_types:
+            callable_args = expected_args[0]
+            expected_return_type = expected_args[1]
+
+            type_a_args = get_args(type_a)
+
+            actual_args = type_a_args[0] if hasattr(type_a, '__args__') else ()
+            actual_return_type = type_a_args[1] if hasattr(type_a, '__args__') else Any
+
+            if callable_args is Ellipsis or actual_args is Ellipsis:
+                return is_compatible_type(actual_return_type, (expected_return_type,))
+
+            if len(callable_args) == len(actual_args):
+                if all(is_compatible_type(arg_a, (arg_b,))
+                       for arg_a, arg_b
+                       in zip(actual_args, callable_args)):
+                    return is_compatible_type(actual_return_type, (expected_return_type,))
+            return False
 
         elif expected_origin is not None and type_a_origin is expected_origin:
             if all(is_compatible_type(type_a, (arg,)) for arg in expected_args):
@@ -36,22 +59,6 @@ def is_compatible_type(type_a: Type[Any], valid_types: Tuple[Type[Any], ...]) ->
             if is_compatible_type(type_a, (base_type,)):
                 return True
 
-        elif expected_origin is Callable and type_a_origin is Callable:
-            callable_args = expected_args[0]
-            expected_return_type = expected_args[1]
-
-            type_a_args = get_args(type_a)
-
-            actual_args = type_a_args[0] if hasattr(type_a, '__args__') else ()
-            actual_return_type = type_a_args[1] if hasattr(type_a, '__args__') else Any
-
-            if len(callable_args) == len(actual_args):
-                if all(is_compatible_type(arg_a, (arg_b,))
-                       for arg_a, arg_b
-                       in zip(actual_args, callable_args)):
-                    return is_compatible_type(actual_return_type, (expected_return_type,))
-            return False
-
         elif isinstance(expected_type, TypeVar):
             if type_a == expected_type.__bound__:
                 return True
@@ -60,6 +67,9 @@ def is_compatible_type(type_a: Type[Any], valid_types: Tuple[Type[Any], ...]) ->
         elif (callable(expected_type) and
               not isinstance(expected_type, type) and
               hasattr(expected_type, '__supertype__')):
+            if type_a == expected_type:
+                return True
+
             base_type = expected_type.__supertype__
             if isinstance(type_a, base_type):
                 return True
