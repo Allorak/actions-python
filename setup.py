@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="actions-python",
-    version="0.3.0",
+    version="0.7.5",
     author="Mike Moiseev",
     author_email="mvmoiseev@miem.hse.ru",
     description="A simple Python packaging for managing event-like actions and validating handlers argument types.",
