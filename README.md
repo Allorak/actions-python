@@ -11,6 +11,11 @@ in event-driven systems.
 - **Type validation**: Ensures that handler argument types match the expected types defined when the action is initialized.
 - **Dynamic handling**: Allows flexible addition of handlers at runtime, each with its own argument type validation.
 - **Supports multiple argument types**: Can handle multiple types of arguments for a single action.
+- **Configurable Type Safety Levels:**  
+  Choose between three enforcement modes:
+  - **NONE:** No type checking is performed.
+  - **WARNING:** Type mismatches are logged as warnings.
+  - **ERROR:** Type mismatches raise `TypeError` exceptions.
 
 ## Installation
 
@@ -53,6 +58,30 @@ test = Test()
 test.example_action.connect(print_callback)
 test.fire()
 ```
+If you try to connect a handler with a mismatched signature or invoke with arguments of the wrong type, the system will either log a warning or raise a `TypeError` (depending on the chosen type safety level).
+```python
+from actions import Action, TypeSafetyLevel
+
+class Test:
+    def __init__(self):
+        self.example_action = Action(int, str, type_safety=TypeSafetyLevel.NONE)
+
+    def fire(self):
+        self.example_action.invoke(0, "test") 
+
+# Changed signature from previous example
+def print_callback(text: str, number: int):
+    print(f"Number: {number} | Text: {text}")
+
+test = Test()
+# Type mismatch is ignored due to action's type_safety set to TypeSafetyLevel.NONE
+# However it might lead to RuntimeError, depending on handler
+test.example_action.connect(print_callback)
+test.fire()
+```
 
 ## Example
 Usage examples can be found in `examples/` folder
+
+Below is an example of a README file for your project:
+
