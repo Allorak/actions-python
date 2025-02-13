@@ -8,8 +8,6 @@ from .type_safety_level import TypeSafetyLevel
 
 Args = TypeVar('Args')
 
-#TODO: тесты; обработка параметров при вызове, если нет тайп хинтов
-
 class Action:
     """
     Represents an action that can connect handlers and invoke them with specified argument types.
