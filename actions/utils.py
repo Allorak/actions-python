@@ -1,4 +1,4 @@
-from typing import Any, Union, Type, Tuple, TypeVar, Callable, Annotated, NewType, get_args, get_origin
+from typing import Any, Union, Type, Tuple, TypeVar, Callable, Annotated, get_args, get_origin
 
 def is_compatible_type(type_a: Type[Any], valid_types: Tuple[Type[Any], ...]) -> bool:
     """
