@@ -13,39 +13,38 @@ class Action:
     Represents an action that can connect handlers and invoke them with specified argument types.
     Handlers are validated to ensure their argument types match the expected types when connected or invoked.
     """
-    def __init__(self, *arg_types: Type, type_safety: TypeSafetyLevel = TypeSafetyLevel.ERROR) -> None:
+    def __init__(self, *arg_types: Type) -> None:
         """
         Initializes the Action with the expected argument types for handlers.
 
         Args:
             arg_types: One or more types that specify the expected argument types for any connected
                        handler.
-            type_safety (TypeSafetyLevel, optional): The level of type safety enforcement. Defaults
-                                                      to TypeSafetyLevel.ERROR.
         """
         self._type_variants = get_real_types(*arg_types)
-        self._type_safety = type_safety
 
         self._handlers: List[Callable[..., None]] = []
 
-    def connect(self, handler: Callable[..., None]) -> None:
+    def connect(self, handler: Callable[..., None], type_safety: TypeSafetyLevel = TypeSafetyLevel.ERROR) -> None:
         """
         Connects a handler (callback) to the action and validates its signature against the expected argument types.
 
         Args:
             handler: A callable to be connected to the action. It should match the expected argument types.
+            type_safety (TypeSafetyLevel, optional): The level of type safety enforcement. Defaults
+                                                      to TypeSafetyLevel.ERROR.
 
         Raises:
             TypeError: If the handler's signature does not match the expected argument types.
             (if type safety level is ERROR)
         """
 
-        if self._type_safety != TypeSafetyLevel.NONE:
+        if type_safety != TypeSafetyLevel.NONE:
             types_compatible: bool
             error: TypeError
             types_compatible, error= self._check_connect_types(handler)
 
-            self._process_type_check_result(types_compatible, error)
+            self._process_type_check_result(types_compatible, type_safety, error)
 
         self._handlers.append(handler)
 
@@ -65,22 +64,24 @@ class Action:
             raise ValueError("Can't disconnect handler: handler is not connected..")
 
 
-    def invoke(self, *args: Args) -> None:
+    def invoke(self, *args: Args, type_safety: TypeSafetyLevel = TypeSafetyLevel.ERROR) -> None:
         """
         Invokes all connected handlers with the provided arguments, ensuring type validation before calling.
 
         Args:
             args: Arguments to pass to the connected handlers. These must match the expected types.
+            type_safety (TypeSafetyLevel, optional): The level of type safety enforcement. Defaults
+                                                      to TypeSafetyLevel.ERROR.
 
         Raises:
             TypeError: If the arguments passed do not match the expected types.
         """
-        if self._type_safety != TypeSafetyLevel.NONE:
+        if type_safety != TypeSafetyLevel.NONE:
             types_compatible: bool
             error: TypeError
             types_compatible, error= self._check_invoke_types(*args)
 
-            self._process_type_check_result(types_compatible, error)
+            self._process_type_check_result(types_compatible, type_safety, error)
 
         for handler in self._handlers:
             handler(*args)
@@ -145,13 +146,14 @@ class Action:
 
         return True, None
 
-    def _process_type_check_result(self, types_compatible: bool ,error: TypeError) -> None:
+    def _process_type_check_result(self, types_compatible: bool, type_safety: TypeSafetyLevel, error: TypeError) -> None:
         """
         Processes the result of a type check by either logging a warning or raising an error,
         depending on the configured type safety level.
 
         Args:
             types_compatible: A boolean indicating if the type check passed.
+            type_safety: A TypeSafetyLevel indicating type check importance
             error: The TypeError to raise or log if the type check fails.
 
         Raises:
@@ -160,12 +162,14 @@ class Action:
         if types_compatible:
             return
 
-        if self._type_safety == TypeSafetyLevel.NONE:
+        if type_safety == TypeSafetyLevel.NONE:
             return
 
-        if self._type_safety == TypeSafetyLevel.WARNING:
+        if type_safety == TypeSafetyLevel.WARNING:
             logger.warning(str(error))
             return
 
-        if self._type_safety == TypeSafetyLevel.ERROR:
+        if type_safety == TypeSafetyLevel.ERROR:
             raise error
+
+        raise ValueError(f"_process_type_check_result invoked with unknown {type_safety=}")
